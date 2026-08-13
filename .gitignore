@@ -12,6 +12,43 @@ _OpenInEditor.lock
 Game.agf.user
 *.crm.user
 
+# Unity generated folders and caches
+# The Unity project is nested under Roguelike_Demo/.
+**/[Ll]ibrary/
+**/[Tt]emp/
+**/[Oo]bj/
+**/[Ll]ogs/
+**/[Uu]ser[Ss]ettings/
+**/[Bb]uild/
+**/[Bb]uilds/
+**/[Ee]xported[Oo]bj/
+
+# Unity and IDE generated project files
+**/*.csproj
+**/*.unityproj
+**/*.sln
+**/*.suo
+**/*.user
+**/*.userprefs
+**/*.pidb
+**/*.booproj
+**/*.svd
+**/*.pdb
+**/*.mdb
+**/*.opendb
+**/*.VC.db
+**/.vs/
+
+# Unity generated or local-only files
+**/*.tmp
+**/sysinfo.txt
+**/mono_crash.*
+**/*.log
+**/*.apk
+**/*.aab
+**/*.unitypackage
+**/*.app
+
 # Backups
 Game.agf.bak
 backup_acsprset.spr
