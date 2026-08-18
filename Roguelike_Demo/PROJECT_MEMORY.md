@@ -165,5 +165,6 @@ A/B/C/D 和每个补充项都必须保留计划中的课程链接、章节、功
 - 2026-08-18：本轮没有推进功能步骤；Codex 曾未经允许给 `PlayerMove.cs` 加过 Animator 代码，随后已完整撤回，文件恢复无差异。
 - 2026-08-18：用户已自行完成 `PlayerMove.cs` 的 Animator 引用和 `isIdle/isMoving` 同步；运行时确认两个 Bool 会切换。当前“脚本参数同步”已通过，但动画视觉切换未通过，因为课程控制器的 Move 过渡还要求对应的 `aim...` 方向 Bool，同时 `MouseVector.cs` 目前只旋转角色、没有设置方向参数。
 - 2026-08-18：用户手动同时设置 `aimDown=true`、`isMoving=true`、`isIdle=false` 后确认 `MoveDown` 能正常高亮；由此确认现有 Move 过渡接线有效，当前卡点正式转为“由 `MouseVector` 自动维护方向 Bool”。
+- 2026-08-18：用户已完成六方向朝向参数同步并确认运行稳定。`MouseVector` 继续旋转 `WeaponRotationPoint`，但方向判断改用根物体 `Player` 的位置，避免动画移动 `WeaponAnchorPosition` 后反向干扰 `playerDirection`。六方向静止/移动动画验证通过。
 - 当前教学规则：先熟悉教材对应的玩家动画流程，再由用户在 Unity/代码编辑器中亲自完成一个小动作；Codex 不自动修改项目。
 - 当前功能目标顺序：先确认 Animator/Prefab 的现有绑定 → 再由用户接入行走状态 → 再接瞄准方向 → 最后接翻滚；不同时修改多个系统。
