@@ -31,7 +31,7 @@ Codex 在本项目中必须以“教练/老师”身份工作：
 
 独立 Demo 的目标工程：
 
-- 路径目标：`/Users/zhangyice/Documents/GitHub/unity-2d-dungeon-roguelite`
+- 当前工程路径：`/Users/zhangyice/Documents/GitHub/Roguelike-Demo/Roguelike_Demo`
 - Unity：`2022.3.62f1c1`
 - 模板：2D URP
 - 输入：Legacy Input
@@ -75,7 +75,7 @@ Codex 在本项目中必须以“教练/老师”身份工作：
 
 必须按这个顺序推进，不能为了追教程跳跃：
 
-`角色 3C/FSM → 武器主链 → 子弹对象池 → 敌人 FSM → 四方向 A* → 房门/房间门控 → 胜负闭环`
+`角色 3C/FSM → Health/Hurt/Dead → 武器主链 → 子弹对象池 → 敌人 FSM → 四方向 A* → 房门/房间门控 → 胜负闭环`
 
 当天 B/C 没有完成时，下一学习日继续最早未完成功能；后续开发目标整体顺延。A 块固定课程日期不随开发闸门移动。只有收到用户明确的“完成 / 部分 / 卡住”反馈后，才能更新开发闸门。
 
@@ -168,3 +168,21 @@ A/B/C/D 和每个补充项都必须保留计划中的课程链接、章节、功
 - 2026-08-18：用户已完成六方向朝向参数同步并确认运行稳定。`MouseVector` 继续旋转 `WeaponRotationPoint`，但方向判断改用根物体 `Player` 的位置，避免动画移动 `WeaponAnchorPosition` 后反向干扰 `playerDirection`。六方向静止/移动动画验证通过。
 - 当前教学规则：先熟悉教材对应的玩家动画流程，再由用户在 Unity/代码编辑器中亲自完成一个小动作；Codex 不自动修改项目。
 - 当前功能目标顺序：先确认 Animator/Prefab 的现有绑定 → 再由用户接入行走状态 → 再接瞄准方向 → 最后接翻滚；不同时修改多个系统。
+
+## 10. 2026-08-18 结算快照
+
+- 实际工程已核验：`/Users/zhangyice/Documents/GitHub/Roguelike-Demo/Roguelike_Demo`，Unity `2022.3.62f1c1`，结算前 Git 工作区干净，当前提交 `1fa1c59`；结算后仅本文件有本次有意记忆更新。
+- 已有证据：`Player.prefab` 绑定 `TheGeneral.controller`；`PlayerMove.cs` 读取 Legacy Input、驱动 `Rigidbody2D` 并维护 `isIdle/isMoving`；`MouseVector.cs` 维护六方向瞄准 Bool；Animator 控制器已有 Idle/Move 状态与对应参数。项目记忆记录了用户确认的六方向静止/移动动画运行结果。
+- 未完成：`Locomotion/Dodge/enum/ChangeState/switch`、翻滚冷却；`Health/Hurt/Dead/HealthChanged/Died`、短暂无敌、失败提示与 `R` 重开；`WeaponDefinition/WeaponController`、手枪和临时子弹；`ObjectPool<Projectile>`；敌人 FSM；四方向 A*；房门/房间门控；`Playing/Won/Lost`。
+- 学习证据未核验：08-17 原 A 块 Godot P50—P56、GDScript P22—P26、C# 进阶 P38。它们必须作为独立补充项保留，不得合并或报废。
+- 更早语法状态已校正：08-13 Godot P19—P24、GDScript P5/P7—P8/P10—P12随整张日卡完成而关闭；当前顺延点为08-14 Godot P25—P29、GDScript P13—P18。08-15、08-17、08-18及之后的课程仍保存，但在当前组完成前不显示。
+- C# P32、P34、P36有历史完成记录；P38当前没有新的完成证据，P40按资源目录计划仍待核验。
+- 算法课程继续暂停且不形成旧债；Demo 必做的四方向 A* 不是旧算法债，仍需在开发阶段完成，当前没有完成证据。
+- 下一步闸门：先完成玩家 `Locomotion/Dodge`，再完成 `Health/Hurt/Dead`，再进入手枪主链；对象池、敌人、A*、房门和胜负闭环继续按依赖顺延。
+
+## 11. 日卡顺延分流规则（用户纠正：2026-08-18）
+
+- 原始日卡按日期保存；活动卡由当天原卡加必要的开发补充和课程顺延组成。
+- Godot/GDScript课程独立按所属日期顺延：当天未完成，下一张活动卡继续显示当天这组课；后续日期的课程暂不显示。C#已完成课程不重复。
+- 开发任务不能丢失，每项未完成开发都作为独立补充项累计，依赖顺序为 `Locomotion/Dodge` → `Health/Hurt/Dead` → 手枪 → 对象池 → 敌人 → A* → 房门 → 胜负闭环。
+- 08-13已由用户确认完成；当前课程顺延点是08-14 Godot P25—P29与GDScript P13—P18，完成前不显示08-15及之后课程。
