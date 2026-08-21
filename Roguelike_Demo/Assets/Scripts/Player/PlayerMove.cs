@@ -1,7 +1,12 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
-
+//声明玩家状态枚举
+enum PlayerState
+{
+    Locomotion, //常规移动状态
+    Dodge //翻滚
+}
 public class PlayerMove : MonoBehaviour
 {
     //声明玩家的移动速度
@@ -14,6 +19,8 @@ public class PlayerMove : MonoBehaviour
     private float verticalInput;
     //声明玩家的animator控制器
     private Animator playerAnimator;
+    //声明玩家的状态
+    private PlayerState currentState = PlayerState.Locomotion;
 
     void Start()
     {
@@ -41,11 +48,45 @@ public class PlayerMove : MonoBehaviour
             playerAnimator.SetBool("isIdle", false);
             playerAnimator.SetBool("isMoving", true);
         }
+        //处理玩家的状态切换
+        if(Input.GetKeyDown(KeyCode.Space) )
+        {
+           if(currentState == PlayerState.Locomotion)
+            {
+                ChangeState(PlayerState.Dodge);
+            }
+            else if(currentState == PlayerState.Dodge)
+            {
+                ChangeState(PlayerState.Locomotion);
+            }
+        }
       
     }
     void FixedUpdate()
     {
-        //处理玩家的移动逻辑
-        playerRigidbody.velocity = new Vector2(horizontalInput * moveSpeed, verticalInput * moveSpeed);
+        //根据玩家状态处理移动逻辑
+        switch (currentState)
+        {
+            case PlayerState.Locomotion:
+                {
+                    //处理玩家的移动逻辑
+                    playerRigidbody.velocity = new Vector2(horizontalInput * moveSpeed, verticalInput * moveSpeed);
+                }
+            break;
+            case PlayerState.Dodge:
+                {
+                    //处理玩家的翻滚逻辑
+                    playerRigidbody.velocity = Vector2.zero;
+                }
+            break;
+
+
+        }
+    }
+    //声明一个方法改变玩家状态
+    private void ChangeState(PlayerState newState)
+    {
+        currentState = newState;
+         Debug.Log("当前玩家状态：" + currentState);
     }
 }
