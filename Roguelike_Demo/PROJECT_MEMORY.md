@@ -1,7 +1,7 @@
 # Unity 暑期学习项目｜可迁移项目记忆
 
 > 用途：把本项目的目标、路线、边界、教程来源和教学方式交给另一台电脑上的 Codex。
-> 更新时间：2026-08-18（Asia/Shanghai）
+> 更新时间：2026-08-21（Asia/Shanghai）
 > 这是项目记忆，不是本机私密记忆；不要在这里写账号、密钥或其他敏感信息。
 
 ## 1. Codex 的身份：老师，不是代写员
@@ -21,6 +21,7 @@ Codex 在本项目中必须以“教练/老师”身份工作：
 - 保留用户已有的命名和结构，不为了示范而重写整个脚本，不引入大型框架。
 - 可以给出变量名、方法职责、伪代码、单行提示和局部修改方向；只有用户明确改变本规则时，才考虑提供较完整代码。
 - 遇到报错要先判断是语法、引用、Inspector、Prefab、运行时状态还是逻辑顺序问题，再给最小排查动作。
+- 检查 Unity 的 Animator、Prefab、Inspector、场景、Console、编译状态或运行时状态时，优先使用项目已配置的 Unity MCP 获取可核验证据；MCP 不可用、信息不足或必须由用户判断手感与视觉表现时，再安排用户手动检查。每次使用前先确认活动实例和编辑器就绪状态，不通过 MCP 未经委托修改脚本或项目资产。
 - 同一个问题无明确方向持续 45—60 分钟时，停止硬耗，记录卡点并切换到求助/最小验证。
 - 不自动提交 Git；除非用户明确委托，只报告工作区状态和建议提交信息。
 - 不创建、更新或删除 Apple 提醒事项。学习计划以仓库文件为准。
@@ -168,6 +169,20 @@ A/B/C/D 和每个补充项都必须保留计划中的课程链接、章节、功
 - 2026-08-18：用户已完成六方向朝向参数同步并确认运行稳定。`MouseVector` 继续旋转 `WeaponRotationPoint`，但方向判断改用根物体 `Player` 的位置，避免动画移动 `WeaponAnchorPosition` 后反向干扰 `playerDirection`。六方向静止/移动动画验证通过。
 - 当前教学规则：先熟悉教材对应的玩家动画流程，再由用户在 Unity/代码编辑器中亲自完成一个小动作；Codex 不自动修改项目。
 - 当前功能目标顺序：先确认 Animator/Prefab 的现有绑定 → 再由用户接入行走状态 → 再接瞄准方向 → 最后接翻滚；不同时修改多个系统。
+- 2026-08-21：玩家最小 FSM 的 A 板块已由用户完成并运行验证。`PlayerMove.cs` 已建立 `PlayerState`（`Locomotion`、`Dodge`）、`currentState`、统一的 `ChangeState` 入口，以及位于 `FixedUpdate()` 的 `switch` 物理行为分流。
+- 2026-08-21：已验证临时双向切换：第一次按 Space 从 `Locomotion` 进入 `Dodge`，普通 WASD 位移停止；第二次按 Space 返回 `Locomotion`，普通移动恢复；重复往返正常。状态日志已集中到 `ChangeState()`，只在状态变化时输出。
+- 2026-08-21：A 板块完成证据已提交到 Git，提交为 `02226c1`（“有限状态机的实现”）。开发闸门已进入 B 板块。
+- 2026-08-21：B 板块已推进到“翻滚冷却”。用户已在 `PlayerMove.cs` 中完成：进入 Dodge 时保存并归一化 `dodgeDirection`、使用 `dodgeSpeed` 执行翻滚位移、使用 `dodgeDuration/dodgeTimer` 计算持续时间、计时结束后自动 `ChangeState(PlayerState.Locomotion)`。临时的“第二次按 Space 返回 Locomotion”入口已经移除。
+- 2026-08-21：当前已声明 `dodgeCooldown` 和 `dodgeCooldownTimer`，但从可核验代码看，冷却计时器尚未递减、进入 Dodge 前尚未检查冷却、开始翻滚时也尚未重置冷却。因此当前准确教学起点是实现并验证冷却闭环，不要退回方向、位移或持续时间教学；冷却完成前不进入翻滚动画和 C 板块验收。
+- 2026-08-21：B 板块的翻滚冷却闭环已由用户完成并运行验证。当前实现会在进入 `Dodge` 时把 `dodgeCooldownTimer` 重置为 `dodgeCooldown`，在 `Update()` 中使用 `Time.deltaTime` 持续递减，并仅在 `Locomotion` 且计时器小于等于零时响应 Space。用户确认冷却期间不会新增 `Dodge` 日志，约 1 秒后可再次翻滚。
+- 2026-08-21：Unity MCP 配置已核验可用。当前连接实例为 `Roguelike_Demo@fa4bb3ce289c4c86`，项目根目录与当前工程一致，Unity 版本为 `2022.3.62f1c1`；核验时活动场景为 `Assets/Scenes/SampleScene.unity`，编辑器空闲、未播放、未编译，工具状态为可用。后续 Unity 配置与运行状态检查优先走 MCP。
+- 2026-08-21：B6 向右翻滚动画初次接入后，用户运行反馈出现闪屏并疑似与 Idle 冲突。已核验 `PlayerMove.cs`：`isIdle/isMoving` 在 `Update()` 中不分状态地每帧更新；已核验 `TheGeneral.controller`：Idle、Move 与 `RollRight` 均存在 Any State 入口。因此当前卡点属于 Animator 参数所有权冲突：Dodge 期间 Locomotion 参数仍在抢占动画。下一步应让 `isIdle/isMoving` 只由 `Locomotion` 更新，并在进入 `Dodge` 时立即清空二者；修复并验证前不接其他翻滚方向。
+- 2026-08-21：B6 的 Animator 参数冲突已修复并由用户运行验证通过。`isIdle/isMoving` 现在只在 `Locomotion` 更新，进入 `Dodge` 时会立即清空二者；向右翻滚不再闪屏，结束后能正常返回 Locomotion 动画。MCP 同时确认 Unity 无编译错误或警告。当前只接通 `rollRight`，下一步按同一进入/退出职责接通 `rollLeft`，其余方向尚未完成。
+- 2026-08-21：用户已在 B6 提前接入 `rollRight/rollLeft/rollUp/rollDown` 四个翻滚参数。代码核验显示进入 Dodge 时通过互斥分支只开启一个方向，返回 Locomotion 时会清空全部四个参数；MCP 确认无编译错误或警告。当前状态为“四方向代码已接入、运行验收未完成”，下一步只测试纯 D/A/W/S 四向，不先处理斜向与原地翻滚。
+- 2026-08-21：B6 四方向翻滚动画已由用户运行验收通过。D/A/W/S 的动画与位移方向一致，均无 Idle/Move 闪屏，结束后 Roll 参数会复位并返回 `Locomotion`。当前剩余边界是无方向输入时 Space 会以零向量进入 Dodge、消耗冷却但不产生位移或 Roll 动画；进入 C 稳定性验收前先阻止该无效请求。
+- 2026-08-21：无方向 Space 边界已由用户完成并运行确认。Dodge 的唯一入口现在同时要求 `Locomotion`、冷却归零以及至少一个移动轴非零；原地 Space 不进入 Dodge、不消耗冷却，随后带方向 Space 仍可立即翻滚。代码与 MCP 核验无编译错误或警告。当前进入 C 板块，只做 Locomotion/Dodge 往返、冷却抗连按与状态不锁死的综合运行验收。
+- 2026-08-21：C 板块综合运行验收通过，玩家 `Locomotion/Dodge` 开发闸门完成。用户确认四方向连续翻滚、冷却期间连按、换向、原地 Space 和最终移动恢复均无异常；MCP 复核运行中的 `Player(Clone)` 已稳定回到静止状态，Rigidbody2D 速度为零，Animator 不在过渡中并显示 IdleRight，Console 无错误或警告。当前 Unity 功能的最低档与 B/C 完成条件已满足；“翻滚期间禁射”因武器/射击控制器尚未建立，保留到武器主链接入时用 `Dodge` 状态门控，不视为已有运行证据。下一开发闸门为 `Health/Hurt/Dead`，但本日剩余安排先执行 D 块 Godot P25—P29 与 GDScript P13—P18。
+- 2026-08-21：本日教学会话出现过上下文缺页，导致 Codex 两次错误地把教学进度退回 A 或 B 的方向验证。新会话必须以本段记录、当前 `PlayerMove.cs` 和用户最新反馈为准，不从旧的 2026-08-18 快照重新开始。
 
 ## 10. 2026-08-18 结算快照
 
