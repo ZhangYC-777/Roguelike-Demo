@@ -5,7 +5,9 @@ using UnityEngine;
 enum PlayerState
 {
     Locomotion, //常规移动状态
-    Dodge //翻滚
+    Dodge, //翻滚
+    Hurt, //受伤
+    Dead //死亡
 }
 public class PlayerMove : MonoBehaviour
 {
@@ -33,6 +35,8 @@ public class PlayerMove : MonoBehaviour
     public float dodgeCooldown = 1f;
     //声明玩家的翻滚冷却计时器
     private float dodgeCooldownTimer;
+    //声明Health组件
+    private Health playerHealth;
 
     void Start()
     {
@@ -107,6 +111,11 @@ public class PlayerMove : MonoBehaviour
 
         }
     }
+    void Awake()
+    {
+        //获取Health组件
+        playerHealth = GetComponent<Health>();
+    }
     //声明一个方法改变玩家状态
     private void ChangeState(PlayerState newState)
     {
@@ -138,5 +147,33 @@ public class PlayerMove : MonoBehaviour
              playerAnimator.SetBool("rollUp", false);
              playerAnimator.SetBool("rollDown", false);
          }
+    }
+    //事件的订阅和取消订阅
+    void OnEnable()
+    {
+        playerHealth.HealthChanged += ChangeHealth;
+        playerHealth.Died += Die;
+    }
+    void OnDisable()
+    {
+        playerHealth.HealthChanged -= ChangeHealth;
+        playerHealth.Died -= Die;
+    }
+    //声明一个方法处理伤害逻辑
+    public void ChangeHealth(int currentHealth, int maxHealth)
+    {
+        if(currentHealth <= 0)
+        {
+            return;
+        }
+        else
+        {
+            ChangeState(PlayerState.Hurt);
+        }
+    }
+    //声明一个方法处理死亡逻辑
+    public void Die()
+    {
+        
     }
 }

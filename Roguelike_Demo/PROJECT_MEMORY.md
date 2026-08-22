@@ -1,7 +1,7 @@
 # Unity 暑期学习项目｜可迁移项目记忆
 
 > 用途：把本项目的目标、路线、边界、教程来源和教学方式交给另一台电脑上的 Codex。
-> 更新时间：2026-08-21（Asia/Shanghai）
+> 更新时间：2026-08-22（Asia/Shanghai）
 > 这是项目记忆，不是本机私密记忆；不要在这里写账号、密钥或其他敏感信息。
 
 ## 1. Codex 的身份：老师，不是代写员
@@ -201,3 +201,34 @@ A/B/C/D 和每个补充项都必须保留计划中的课程链接、章节、功
 - Godot/GDScript课程独立按所属日期顺延：当天未完成，下一张活动卡继续显示当天这组课；后续日期的课程暂不显示。C#已完成课程不重复。
 - 开发任务不能丢失，每项未完成开发都作为独立补充项累计，依赖顺序为 `Locomotion/Dodge` → `Health/Hurt/Dead` → 手枪 → 对象池 → 敌人 → A* → 房门 → 胜负闭环。
 - 08-13已由用户确认完成；当前课程顺延点是08-14 Godot P25—P29与GDScript P13—P18，完成前不显示08-15及之后课程。
+
+## 12. 2026-08-22 Health/Hurt/Dead 教学进度
+
+- 用户明确纠正今日课程安排：课程块以其提供的图片为准，执行 Godot P50—P55、GDScript P22—P23、唐老狮 C# 进阶 P38；不要再按旧顺延点给今日课程排课。该纠正目前只适用于用户明确指定的今日安排，后续日卡仍需以用户最新说明和可用计划文件为准。
+- 今日 Unity 唯一目标为玩家最小生命闭环：统一伤害入口 → `Health` → `Hurt` → 受击后短暂无敌 → `Dead` → 按 R 重开；固定状态优先级为 `Dead > Hurt > Dodge > Locomotion`。
+- A 块课程/概念学习已由用户完成并通过问答确认，参考了地牢枪手 P127、P129—P133 与 Unity State Pattern 的小型 `enum / ChangeState / switch` 思路。用户已能区分：`IDamageable` 只规定统一受伤入口；`Health` 验证伤害、实际扣血并判断死亡；事件负责把已经发生的生命变化或死亡结果通知订阅者。
+- 已确认的伤害数据流：子弹或敌人接触只检测命中、提供伤害值并调用 `TakeDamage`；`Health` 在死亡、Dodge 免疫和受击无敌检查通过后才修改生命；有效伤害发布 `HealthChanged`，生命归零发布一次 `Died`。伤害被无敌拒绝时不扣血、不发布事件、也不重置无敌计时，避免持续接触造成“无限续杯”。
+- 已确认的事件认知：`Health` 是发布者；`HealthChanged` 可携带当前生命和最大生命；UI、玩家状态处理及其他受伤表现可以分别订阅。同一事件可通知多个订阅者，发布者不直接依赖具体 UI。UI 只显示结果，不管理真实生命。
+- 已确认的状态机适配：致命伤害发生时由 `Died` 触发 `ChangeState(Dead)`；进入 `Dead` 后，旧 Dodge/Hurt 计时结果不得把状态切回 `Locomotion`。`HealthChanged` 的玩家监听逻辑看到当前生命为零时不应先进入 Hurt，死亡由 `Died` 处理。
+- 当前准确起点为 B1：由用户亲自创建 `Assets/Scripts/Combat` 文件夹和 `IDamageable.cs`。`Combat` 仅表示“战斗”代码分类，不是 Unity 特殊目录；`IDamageable` 应为公开接口，只声明一个无返回值、接收一个整数伤害值的 `TakeDamage` 方法，不继承 `MonoBehaviour`，不写扣血实现。
+- B1 尚未开始或完成：截至本次记忆更新，用户只询问了 `Combat` 的含义，尚未提供 `IDamageable.cs` 内容或 Unity 编译证据。新会话必须从 B1 创建并核对接口开始；不要推断 `Combat`、`IDamageable`、`Health`、`Hurt`、`Dead`、短暂无敌或 R 重开已经实现，也不要直接替用户修改脚本。
+- 2026-08-22：B1 已由用户完成并通过核验。`Assets/Scripts/Combat/IDamageable.cs` 为公开接口，只声明 `void TakeDamage(int damage)`，未继承 `MonoBehaviour`、未包含扣血实现；Unity MCP 刷新并完成编译后，Console 错误和警告均为 0。下一步进入 B2，只建立 `Health` 的最小数据骨架，尚未实现 Hurt、Dead、短暂无敌或 R 重开。
+- 2026-08-22：B2 已由用户完成并通过核验。`Health.cs` 继承 `MonoBehaviour`、实现 `IDamageable`，并提供了签名匹配的空 `TakeDamage(int damage)` 方法；Unity MCP 刷新并完成编译后，Console 错误和警告均为 0。当前尚无生命字段或扣血逻辑，下一步只建立 `maxHealth/currentHealth` 及初始化关系。
+- 2026-08-22：B3 部分完成。用户已声明私有 `maxHealth/currentHealth`，并在 `Awake()` 中执行 `currentHealth = maxHealth`；Unity MCP 编译后 Console 错误和警告均为 0。但 `maxHealth` 尚未序列化，Inspector 无法配置，B3 尚未通过。下一步只为 `maxHealth` 增加 Inspector 序列化，不进入扣血逻辑。
+- 2026-08-22：B3 已由用户完成并通过核验。`maxHealth` 使用 `[SerializeField] private`，可由 Inspector 配置但仍保持对其他脚本封装；`currentHealth` 为普通私有运行时字段，并在 `Awake()` 中从 `maxHealth` 初始化。Unity MCP 编译后 Console 错误和警告均为 0。尚未进入实际扣血逻辑。
+- 2026-08-22：B4 部分完成。`TakeDamage` 已能扣减 `currentHealth` 并在生命小于等于 0 时归零，Unity MCP 编译后 Console 错误和警告均为 0；但入口当前只拒绝 `damage < 0`，尚未拒绝 `damage == 0`。下一步只把入口条件修正为拒绝所有非正伤害，防止后续 0 伤害错误触发事件或无敌计时。
+- 2026-08-22：B4 已由用户完成并通过核验。`TakeDamage` 入口会拒绝 `damage <= 0`，有效伤害扣减 `currentHealth`，归零保护保证生命不会成为负数；Unity MCP 编译后 Console 错误和警告均为 0。当前尚未发布 `HealthChanged/Died`，也尚未实现死亡后的重复伤害拒绝。
+- 2026-08-22：B5 已由用户完成并通过核验。`Health` 已声明公开事件 `HealthChanged`，类型为 `Action<int, int>`，计划依次携带当前生命与最大生命；Unity MCP 编译后 Console 错误和警告均为 0。事件目前仅声明、尚未在有效伤害后发布。
+- 2026-08-22：B6 已由用户完成并通过核验。`TakeDamage` 在有效扣血与归零保护完成后调用 `HealthChanged?.Invoke(currentHealth, maxHealth)`；非正伤害已在调用前返回，因此每次有效伤害只发布一次。Unity MCP 编译后 Console 错误和警告均为 0。下一边界是生命已经归零后仍会接受正伤害并重复发布变化事件。
+- 2026-08-22：B7 已由用户完成并通过核验。`TakeDamage` 入口现同时拒绝 `damage <= 0` 与 `currentHealth <= 0`，保证生命归零后不再扣血或重复发布 `HealthChanged`；Unity MCP 编译后 Console 错误和警告均为 0。下一步开始建立单次 `Died` 通知。
+- 2026-08-22：B8 已由用户完成并通过核验。`Health` 已在成员区域声明公开、无参数的 `Action Died` 事件；Unity MCP 编译后 Console 错误和警告均为 0。事件尚未发布。
+- 2026-08-22：B9 已由用户完成并通过核验。有效伤害会先发布 `HealthChanged`，随后在 `currentHealth <= 0` 时发布 `Died`；由于入口已拒绝死亡后的伤害，`Died` 在当前伤害入口下只会发布一次。Unity MCP 编译后 Console 错误和警告均为 0。尚未将 `Health` 挂到玩家 Prefab，也没有运行时伤害调用证据。
+- 2026-08-22：B10 已由用户完成并通过核验。Unity MCP 确认 `Assets/Prefabs/Player/Player.prefab` 根对象已包含 `Health` 组件，Prefab 序列化数据确认 `maxHealth: 100`，Console 错误和警告均为 0。尚未进行运行时扣血与事件次数验证。
+- 2026-08-22：B11 运行验证通过。用户进入 Play 后，Unity MCP 对运行时 `Player(Clone)` 的 `Health` 做了不保存到工程的测试：初始 100，受到 30 伤害后为 70，足量致死伤害后为 0，死亡后再次伤害仍为 0；事件次数为 `HealthChanged=2`、`Died=1`，顺序为 `HealthChanged(70/100) → HealthChanged(0/100) → Died`。基础生命扣减、归零保护、有效伤害通知和单次死亡通知均已有运行证据。当前 Play 会话中的测试玩家生命为 0，退出 Play 后会恢复 Prefab 配置。
+- 2026-08-22：用户已退出 B11 的 Play 测试，Unity MCP 确认编辑器未播放、未切换且空闲。下一阶段开始把 `HealthChanged/Died` 接入现有玩家 FSM；当前 `PlayerState` 仍只有 `Locomotion/Dodge`，尚无 `Hurt/Dead`。
+- 2026-08-22：B12 已由用户完成并通过核验。现有 `PlayerState` 已扩充为 `Locomotion、Dodge、Hurt、Dead`，尚未添加新状态行为或生命事件订阅；Unity MCP 编译后 Console 错误和警告均为 0。
+- 2026-08-22：B13 首次核验未推进。用户表示理解并完成，但磁盘中的 `PlayerMove.cs` 尚无私有 `Health` 引用，也无用于 `GetComponent<Health>()` 的 `Awake()`；可能是尚未编写或编辑器内容未保存。不得进入 `OnEnable/OnDisable` 订阅，下一步仍是完成并保存 B13 后复核。
+- 2026-08-22：B13 后续确认只是脚本未保存；保存后已通过核验。`PlayerMove` 现有私有 `Health playerHealth`，并在 `Awake()` 中通过 `GetComponent<Health>()` 获取同对象组件；Unity MCP 编译后 Console 错误和警告均为 0。尚未订阅任何生命事件。
+- 2026-08-22：B14 部分完成。用户已在 `PlayerMove` 中创建签名匹配的空处理方法 `ChangeHealth(int currentHealth, int maxHealth)` 与 `Die()`，Unity MCP 编译后 Console 错误和警告均为 0；但尚无 `OnEnable/OnDisable`，因此 `HealthChanged/Died` 实际尚未订阅或退订。
+- 2026-08-22：B14 已由用户完成并通过核验。`PlayerMove` 在 `OnEnable()` 中分别用 `ChangeHealth`、`Die` 订阅 `HealthChanged/Died`，并在 `OnDisable()` 中成对退订；两个处理方法签名匹配且方法体仍为空。Unity MCP 编译后 Console 错误和警告均为 0。尚未产生状态切换行为。
+- 2026-08-22：B15 已由用户完成并通过核验。`ChangeHealth` 在事件传入的当前生命小于等于 0 时直接返回，非致命生命变化才调用 `ChangeState(PlayerState.Hurt)`，避免致命伤害先进入 Hurt；Unity MCP 编译后 Console 错误和警告均为 0。`Die()` 仍为空，Hurt 也尚无物理行为或退出条件，因此暂不进行 Play 测试。
