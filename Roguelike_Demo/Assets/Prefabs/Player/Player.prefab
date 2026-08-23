@@ -681,6 +681,7 @@ MonoBehaviour:
   dodgeSpeed: 10
   dodgeDuration: 0.2
   dodgeCooldown: 1
+  hurtDuration: 0.2
 --- !u!114 &2284765068254476825
 MonoBehaviour:
   m_ObjectHideFlags: 0

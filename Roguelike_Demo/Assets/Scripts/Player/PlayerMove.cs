@@ -1,6 +1,7 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.SceneManagement;
 //声明玩家状态枚举
 enum PlayerState
 {
@@ -37,6 +38,10 @@ public class PlayerMove : MonoBehaviour
     private float dodgeCooldownTimer;
     //声明Health组件
     private Health playerHealth;
+    //声明受伤持续时间
+    public float hurtDuration = 0.2f;
+    //声明受伤倒计时
+    private float hurtTimer;
 
     void Start()
     {
@@ -82,6 +87,12 @@ public class PlayerMove : MonoBehaviour
                 ChangeState(PlayerState.Dodge);
             }
         }
+        //处理玩家死亡后的逻辑
+        if(currentState == PlayerState.Dead && Input.GetKeyDown(KeyCode.R))
+        {
+            //重新加载当前场景
+            SceneManager.LoadScene(SceneManager.GetActiveScene().buildIndex);
+        }
       
     }
     void FixedUpdate()
@@ -104,7 +115,26 @@ public class PlayerMove : MonoBehaviour
                     if (dodgeTimer <= 0)
                     {
                         ChangeState(PlayerState.Locomotion);
+                       
                     }
+                }
+            break;
+            case PlayerState.Hurt:
+                {
+                    //处理玩家的受伤逻辑
+                    playerRigidbody.velocity = Vector2.zero;
+                    //处理计时器逻辑
+                    hurtTimer -= Time.fixedDeltaTime;
+                    if (hurtTimer <= 0)
+                    {
+                        ChangeState(PlayerState.Locomotion);
+                    }
+                }
+            break;
+            case PlayerState.Dead:
+                {
+                    //处理玩家的死亡逻辑
+                    playerRigidbody.velocity = Vector2.zero;
                 }
             break;
 
@@ -114,12 +144,14 @@ public class PlayerMove : MonoBehaviour
     void Awake()
     {
         //获取Health组件
-        playerHealth = GetComponent<Health>();
+        playerHealth = GetComponent<Health>(); 
     }
     //声明一个方法改变玩家状态
     private void ChangeState(PlayerState newState)
     {
         currentState = newState;
+         //设置翻滚无敌
+        playerHealth.SetDamageImmune(newState == PlayerState.Dodge);
          Debug.Log("当前玩家状态：" + currentState);
          //如果玩家状态为翻滚则启动计时器
          if (newState == PlayerState.Dodge)
@@ -147,6 +179,11 @@ public class PlayerMove : MonoBehaviour
              playerAnimator.SetBool("rollUp", false);
              playerAnimator.SetBool("rollDown", false);
          }
+         if(newState == PlayerState.Hurt)
+        {
+            //启动受伤计时器
+            hurtTimer = hurtDuration;
+        }
     }
     //事件的订阅和取消订阅
     void OnEnable()
@@ -174,6 +211,6 @@ public class PlayerMove : MonoBehaviour
     //声明一个方法处理死亡逻辑
     public void Die()
     {
-        
+        ChangeState(PlayerState.Dead);
     }
 }
