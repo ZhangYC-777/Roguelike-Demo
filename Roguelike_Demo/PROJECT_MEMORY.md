@@ -252,3 +252,18 @@ A/B/C/D 和每个补充项都必须保留计划中的课程链接、章节、功
 - 2026-08-23：B28 代码已通过核验。`PlayerMove` 已引入 `UnityEngine.SceneManagement`，并在 `Update()` 中仅当 `currentState == Dead` 且本帧按下 R 时，使用当前活动场景的 buildIndex 调用 `SceneManager.LoadScene`；Unity MCP 编译后 Console 错误和警告均为 0。当前 Play 会话已通过临时致死伤害将玩家置为 `Dead`、生命 0，等待用户在 Unity Game 窗口真实按 R，验证场景重载与满血玩家重新生成；此运行验收尚未完成。
 - 2026-08-23：B28 真实运行验收通过。用户在 `Dead`、生命 0 时于 Unity Game 窗口按 R，确认场景成功重载；Unity MCP 复核新玩家为 `Locomotion`、生命 100、Rigidbody2D 速度为零，Console 无错误或警告，随后已退出 Play。
 - 2026-08-23：玩家 `Health/Hurt/Dead` 开发闸门完成。已有证据覆盖统一 `IDamageable.TakeDamage`、生命扣减与归零保护、`HealthChanged`、单次 `Died`、非致命伤害进入并定时退出 Hurt、有效伤害后的 0.5 秒短暂无敌、Dodge 状态免伤、Dead 停止且不会被旧计时器拉回、死亡后 R 重载当前场景。受击/死亡动画和失败 UI 尚未制作，不影响本轮最小生命闭环通过；下一开发闸门按固定依赖进入武器主链。
+
+## 13. 2026-08-24 手枪武器主链教学进度
+
+- 用户将教学粒度从“每次一句一个任务”调整为“每次用 2—3 句讲清一个连贯小任务”；仍保持一次只推进一个可验证逻辑块，由用户亲自实现并反馈运行证据。
+- 今日开始前已核验：玩家 `Locomotion/Dodge` 与 `Health/Hurt/Dead` 闸门均已通过；Player Prefab 原有 `WeaponRotationPoint → WeaponAnchorPosition → WeaponShootPosition` 挂点链及手枪/子弹素材，但没有武器、投射物脚本或正式子弹 Prefab。
+- A 块已完成。用户创建 `Assets/Scripts/Weapon/WeaponDefinition.cs`，以 `ScriptableObject` 保存武器名称、子弹 Prefab、伤害、子弹速度、存活时间和射击间隔；字段使用 `[SerializeField] private`，并分别提供公开只读属性。`CreateAssetMenu` 路径为 `Weapons/Weapon Definition`。
+- 用户创建 `Assets/WeaponDefinitions/PistolDefinition.asset`，配置为 `Pistol`、伤害 25、子弹速度 12、存活时间 2 秒、射击间隔 0.3 秒，并在后续正确引用 `PistolProjectile.prefab`。
+- 用户创建 `WeaponController.cs` 并挂到 Player Prefab 的 `WeaponRotationPoint`；组件正确引用 `PistolDefinition` 与 `WeaponShootPosition`。控制器使用鼠标左键单发、`Time.time/nextFireTime` 射速门控、临时 `Instantiate` 生成子弹，并以 `shootPoint.right` 作为鼠标瞄准方向。
+- 用户创建 `Assets/Prefabs/Projectiles/PistolProjectile.prefab`：Layer 为 `PlayerAmmo`，Sorting Layer 为 `Instances`，含 SpriteRenderer、Gravity Scale 0 的 Dynamic Rigidbody2D、Continuous 碰撞检测和 Is Trigger 的 CircleCollider2D，并挂载 `Projectile`。
+- `Projectile.Initialize` 会接收方向、伤害、速度与存活时间；保存 25 点伤害快照，以单位化方向乘速度设置 Rigidbody2D velocity，并使用临时 `Destroy(gameObject, lifetime)` 完成 2 秒超时结束。后续对象池闸门再替换 `Instantiate/Destroy`，当前不提前池化。
+- Physics 2D Layer Collision Matrix 已关闭 `PlayerAmmo × Player` 和 `PlayerAmmo × PlayerAmmo`，保留 `PlayerAmmo × Wall/Enemy`；防止玩家自己的子弹命中自身和子弹互撞。
+- `Projectile.OnTriggerEnter2D` 使用 `GetComponentInParent<IDamageable>()` 查找统一伤害入口；找到时调用 `TakeDamage(damage)`，随后无论墙体还是可受伤目标均销毁子弹。用户运行确认墙体会让子弹立即消失；临时 100 HP Enemy Layer 目标运行确认单发伤害后生命为 75，临时测试日志与目标均未保留。
+- `PlayerMove` 新增实时计算的公开只读属性 `CanFire => currentState == PlayerState.Locomotion`；`WeaponController` 通过 `GetComponentInParent<PlayerMove>()` 获取玩家，并将 `playerMove.CanFire` 加入开火条件，因此 Dodge、Hurt、Dead 均禁射。
+- 今日 C 块运行验收已由用户确认通过：普通状态左键按 0.3 秒配置单发；子弹上下左右均沿鼠标/枪口方向正确飞行；墙体命中立即结束；`IDamageable` 目标受到 25 点伤害后子弹结束；未命中时约 2 秒超时结束；Dodge 期间连续点击不生成子弹、回到 Locomotion 后立即恢复；Console 无阻断性红色报错。
+- 今日武器主链开发闸门完成。尚未处理对象池、霰弹枪、切枪、弹药、音效、枪口效果或后坐力；下一固定开发闸门为两把枪共用的 `ObjectPool<Projectile>`，但开始前应先由用户决定是否结算/提交今天的手枪主链变更，Codex 不自动提交 Git。

@@ -42,6 +42,8 @@ public class PlayerMove : MonoBehaviour
     public float hurtDuration = 0.2f;
     //声明受伤倒计时
     private float hurtTimer;
+    //添加开火门控
+    public bool CanFire => currentState == PlayerState.Locomotion;
 
     void Start()
     {

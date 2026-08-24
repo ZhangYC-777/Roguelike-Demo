@@ -695,6 +695,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   maxHealth: 100
+  invincibilityDuration: 0.5
 --- !u!1 &8323812201799957427
 GameObject:
   m_ObjectHideFlags: 0
@@ -705,6 +706,7 @@ GameObject:
   m_Component:
   - component: {fileID: 7714309018487475047}
   - component: {fileID: 1560945079071691432}
+  - component: {fileID: 5303795082677402629}
   m_Layer: 18
   m_Name: WeaponRotationPoint
   m_TagString: Untagged
@@ -742,3 +744,17 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: d346cffdbe04e43cb8933a663e90153f, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+--- !u!114 &5303795082677402629
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8323812201799957427}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 7d8cd381c1b48a748ad7441ed14a37c2, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  weaponDefinition: {fileID: 11400000, guid: afd66f289aea1874d937f5b63091083d, type: 2}
+  shootPoint: {fileID: 1726574885989451761}
