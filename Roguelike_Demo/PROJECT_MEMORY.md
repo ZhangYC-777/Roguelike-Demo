@@ -267,3 +267,16 @@ A/B/C/D 和每个补充项都必须保留计划中的课程链接、章节、功
 - `PlayerMove` 新增实时计算的公开只读属性 `CanFire => currentState == PlayerState.Locomotion`；`WeaponController` 通过 `GetComponentInParent<PlayerMove>()` 获取玩家，并将 `playerMove.CanFire` 加入开火条件，因此 Dodge、Hurt、Dead 均禁射。
 - 今日 C 块运行验收已由用户确认通过：普通状态左键按 0.3 秒配置单发；子弹上下左右均沿鼠标/枪口方向正确飞行；墙体命中立即结束；`IDamageable` 目标受到 25 点伤害后子弹结束；未命中时约 2 秒超时结束；Dodge 期间连续点击不生成子弹、回到 Locomotion 后立即恢复；Console 无阻断性红色报错。
 - 今日武器主链开发闸门完成。尚未处理对象池、霰弹枪、切枪、弹药、音效、枪口效果或后坐力；下一固定开发闸门为两把枪共用的 `ObjectPool<Projectile>`，但开始前应先由用户决定是否结算/提交今天的手枪主链变更，Codex 不自动提交 Git。
+
+## 14. 2026-08-25 Projectile 对象池教学进度
+
+- 用户先完成对象池概念学习，已能解释 `Get/Release`、命中敌人/撞墙/超时三个归还原因、重复归还保护，以及 `ObjectPool<Projectile>` 与 `IObjectPool<Projectile>` 引用同一实例的接口关系。
+- `WeaponController` 已持有并在 `Awake()` 创建 `ObjectPool<Projectile>`；创建、取出、归还、池满销毁回调分别负责首次实例化、激活、停用与真正销毁，`collectionCheck` 已开启，默认容量为 10、最大容量为 50。
+- `Fire()` 已由逐枪 `Instantiate` 改为 `projectilePool.Get()`，每次取出后重设枪口位置和旋转，再调用现有 `Initialize` 写入本轮方向、伤害、速度与寿命。普通发射链路不再直接创建子弹；`Instantiate` 仅保留在池的创建回调中。
+- `Projectile` 通过 `IObjectPool<Projectile>` 保存创建它的池引用；`CreateProjectile()` 创建组件后使用 `SetProjectilePool` 注入同一个池。子弹不创建或查找自己的池。
+- `Projectile.Initialize()` 每轮复位 `hasReturned=false` 和 `remainingLifetime`；旧的两个普通 `Destroy` 已移除。`Update()` 在寿命耗尽时调用 `TryReturnToPool()`；`OnTriggerEnter2D()` 保持先调用 `IDamageable.TakeDamage`，随后无论敌人还是墙都调用同一个 `TryReturnToPool()`。
+- `TryReturnToPool()` 会先拒绝已经归还的本轮请求，再标记 `hasReturned=true`、清零 Rigidbody2D 速度并调用 `Release(this)`；因此三个结束原因共享同一防重复门。真正的 `Destroy` 只保留在池达到最大容量时的销毁回调中。
+- 用户运行确认：未命中子弹约 2 秒后在 Hierarchy 变灰但不消失，下一枪复用同一 Clone；撞墙会立即归还且再次射击不增加 Clone；命中实现 `IDamageable` 的测试目标后伤害与归还路径正常；连续发射 20—30 枪后 Clone 总数趋于稳定，停止射击后全部停用，Console 无重复 `Release` 或其他红色错误。
+- 用户有意保留 `Assets/Prefabs/TestEnemy/enemy.prefab` 作为长期回归夹具；当前配置为 Enemy Layer、SpriteRenderer、BoxCollider2D 与 100 HP `Health`，无敌人 AI 或额外逻辑，应作为本轮新增测试资产保留。
+- 当前对象池闸门已完成“手枪真实池化、三入口统一归还、防重复 Release、数量稳定”的代码与运行验收。工程尚无霰弹枪、切枪或第二个武器定义，因此“两把枪实际共用同一池”目前只有 `WeaponController` 单池架构条件，尚无双枪运行证据；后续建立霰弹枪时需复用同一基础 Projectile Prefab 并补做双枪共池验收。
+- 本轮尚未提交 Git；功能改动位于 `WeaponController.cs`、`Projectile.cs`，新增长期测试 Prefab 位于 `Assets/Prefabs/TestEnemy/`。
