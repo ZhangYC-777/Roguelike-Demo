@@ -29,4 +29,18 @@ public class WeaponDefinition : ScriptableObject
     [SerializeField]
     private float fireInterval;
     public float FireInterval => fireInterval;
+    //声明子弹产生数量
+    [SerializeField]
+    private int projectileCount;
+    public int ProjectileCount => projectileCount;
+    //声明子弹的散射角度
+    [SerializeField]
+    private float spreadAngle;
+    public float SpreadAngle => spreadAngle;
+    //声明武器的sprite
+    [SerializeField]
+    private Sprite weaponSprite;
+    public Sprite WeaponSprite => weaponSprite;
+
+
 }

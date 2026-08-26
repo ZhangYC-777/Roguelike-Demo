@@ -10,14 +10,14 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 641e705b8a70fbf43881e257e7aca395, type: 3}
-  m_Name: PistolDefinition
+  m_Name: ShotgunDefinition
   m_EditorClassIdentifier: 
-  weaponName: Pistol
+  weaponName: Shotgun
   projectilePrefab: {fileID: 938154539781238503, guid: e039a1e2e3dd3e043a3bf50f0c4689d0, type: 3}
-  damage: 25
-  projectileSpeed: 12
-  projectileLifetime: 2
-  fireInterval: 0.3
-  projectileCount: 1
-  spreadAngle: 0
-  weaponSprite: {fileID: 21300000, guid: abbe40c4d6a803f42a7c4f53404a484d, type: 3}
+  damage: 10
+  projectileSpeed: 10
+  projectileLifetime: 1
+  fireInterval: 0.8
+  projectileCount: 5
+  spreadAngle: 30
+  weaponSprite: {fileID: 21300000, guid: 957e7c5a4532c7b4fa28cd31bf5aee5d, type: 3}

@@ -756,5 +756,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 7d8cd381c1b48a748ad7441ed14a37c2, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  weaponDefinition: {fileID: 11400000, guid: afd66f289aea1874d937f5b63091083d, type: 2}
+  weaponDefinitions:
+  - {fileID: 11400000, guid: afd66f289aea1874d937f5b63091083d, type: 2}
+  - {fileID: 11400000, guid: 7b832b313e05fd940a77eb2d58d3ba72, type: 2}
   shootPoint: {fileID: 1726574885989451761}
+  weaponSpriteRenderer: {fileID: 3259039910847957783}

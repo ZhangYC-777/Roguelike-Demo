@@ -280,3 +280,16 @@ A/B/C/D 和每个补充项都必须保留计划中的课程链接、章节、功
 - 用户有意保留 `Assets/Prefabs/TestEnemy/enemy.prefab` 作为长期回归夹具；当前配置为 Enemy Layer、SpriteRenderer、BoxCollider2D 与 100 HP `Health`，无敌人 AI 或额外逻辑，应作为本轮新增测试资产保留。
 - 当前对象池闸门已完成“手枪真实池化、三入口统一归还、防重复 Release、数量稳定”的代码与运行验收。工程尚无霰弹枪、切枪或第二个武器定义，因此“两把枪实际共用同一池”目前只有 `WeaponController` 单池架构条件，尚无双枪运行证据；后续建立霰弹枪时需复用同一基础 Projectile Prefab 并补做双枪共池验收。
 - 本轮尚未提交 Git；功能改动位于 `WeaponController.cs`、`Projectile.cs`，新增长期测试 Prefab 位于 `Assets/Prefabs/TestEnemy/`。
+
+## 15. 2026-08-26 霰弹枪与切枪教学进度
+
+- 用户调整教学节奏：以后先由 Codex 结合课程讲清当前功能的整体概念与数据流，再进入分块学习和实际开发；仍由用户亲自实现，Codex 负责核验和下一步教学。
+- `WeaponDefinition` 已新增私有序列化字段 `projectileCount`、`spreadAngle` 及对应公开只读属性 `ProjectileCount`、`SpreadAngle`。`PistolDefinition` 已保存为弹丸数量 1、散射角 0。
+- 已创建 `ShotgunDefinition`，配置为名称 `Shotgun`、伤害 10、弹速 10、寿命 1 秒、射击间隔 0.8 秒、弹丸数量 5、总散射角 30；与手枪引用同一个 `PistolProjectile.prefab`。
+- `WeaponController` 已将单个武器定义改为 `WeaponDefinition[] weaponDefinitions`，以 `currentWeaponIndex` 和只读 `CurrentWeaponDefinition` 统一读取当前武器。Player Prefab 数组顺序已核验为 0 手枪、1 霰弹枪；对象池仍只有 `WeaponController.Awake()` 创建的同一个实例。
+- 1/2 切枪已接入：主键盘 1/2 分别请求索引 0/1，`SwitchWeapon` 拒绝越界与重复选择，真正切换后重置 `nextFireTime` 以允许新武器立即开火；切枪处理位于开火判断之前。Unity 编译无错误或警告，用户运行确认可以稳定切换、无异常。
+- 当前霰弹枪仍只生成一颗弹丸。下一准确教学起点是只让 `Fire()` 按当前武器的 `ProjectileCount` 多次从同一池取弹并初始化，先验证数量，再加入散射方向。
+- `Fire()` 已按 `CurrentWeaponDefinition.ProjectileCount` 循环执行取弹、定位、旋转和初始化，射击冷却仍只在一次 `Fire()` 后更新一次。Unity 编译无错误或警告；用户运行确认手枪一次有 1 个活动弹丸、霰弹枪一次有 5 个活动弹丸，五颗霰弹当前方向相同并完全重叠。下一步加入以枪口方向为中心的对称散射。
+- 对称散射已完成并通过运行验收。`Fire()` 对单弹丸使用 0 起始角和 0 间隔，对多弹丸使用 `-SpreadAngle/2` 起点与 `SpreadAngle/(ProjectileCount-1)` 间隔；每颗弹丸都以 `Quaternion.Euler` 从原始 `shootPoint.right` 得到独立 `rotatedDirection` 并传入 `Initialize()`。用户确认手枪朝四向均沿鼠标中心发射、霰弹枪五颗形成以枪口为中心的对称扇形、切回手枪不继承旧偏移，视觉表现也合理。当前不额外修改弹丸 Transform 朝向；下一步进行射速差异与双枪共池数量稳定的综合验收。
+- 双枪共池综合运行验收已由用户确认通过：1/2 切换稳定，手枪保持单发，霰弹枪每次五颗并呈 30 度对称散射，两把枪射速差异生效；霰弹枪归还后的对象可供手枪继续复用，相同压力重复射击时 Projectile Clone 总量不持续增长，停止射击后弹丸均会停用。Unity MCP 复核编辑器已退出 Play、当前空闲，Console 错误和警告均为 0。随后发现切枪只改变数据，Player Prefab 的 `Weapon` 子对象 `SpriteRenderer` 仍固定引用 `Pistol.png`，`WeaponDefinition` 也尚无枪械 Sprite 字段，因此霰弹枪图片不会切换。今日目标暂不结算；下一步先给武器定义增加 Sprite 数据，再由 `WeaponController` 在初始和切换时同步 `Weapon` 的 SpriteRenderer，最后移除临时日志并编译确认。
+- 武器图片切换已补齐并通过运行回归。`WeaponDefinition` 新增私有序列化 `weaponSprite` 与公开只读 `WeaponSprite`，两份定义分别引用 `Pistol.png` 与 `Shotgun.png`；`WeaponController` 持有 Player Prefab 中 `Weapon` 子对象的 `SpriteRenderer`，通过 `ApplyCurrentWeaponVisual()` 在 `Awake()` 初始同步，并在真正更新武器索引后同步新图片。用户确认进入 Play 初始显示手枪，1/2 切换时图片、单发/散射、鼠标朝向、枪口位置与共池复用均正常。临时切枪日志已移除，Unity 最终刷新编译后 Console 错误和警告均为 0，编辑器已退出 Play且空闲。2026-08-26 今日唯一目标“霰弹枪、多弹丸散射、1/2 切枪、两把枪共用同一对象池且池对象数量不持续增长”正式完成；改动尚未提交 Git。
