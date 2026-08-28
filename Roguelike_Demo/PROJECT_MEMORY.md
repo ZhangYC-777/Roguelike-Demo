@@ -309,3 +309,23 @@ A/B/C/D 和每个补充项都必须保留计划中的课程链接、章节、功
 - 2026-08-27：第二次静态复核确认两项已修正：Dormant 激活现在只检查 `distance <= activationDistance`；MoveTowards 返回的绝对下一位置现在直接传给 Rigidbody2D.MovePosition，不再重复累加当前位置。仍有一个阻断点：MovePosition 位于停止距离 `if` 之后且不在任何分支内，因此即使 `distance <= stopDistance` 已设置零速度和 Idle 动画，本帧仍会无条件发出移动命令。下一步将移动命令和 Moving 动画放入“距离大于停止距离”的分支，停止分支不调用 MovePosition，再进行运行验证。
 - 2026-08-27：Chase 移动/停止分支已由用户修正并通过静态核验。当前 Chase 每个物理帧先计算玩家距离；`distance <= stopDistance` 时速度归零并设置 Idle，且不调用 MovePosition；距离更大时才使用 `Vector2.MoveTowards` 计算绝对下一位置、通过 Rigidbody2D.MovePosition 应用，并设置 Moving。状态保持 Chase，激活条件仅为进入 activationDistance。代码层面的 `Dormant → Chase → 直线追踪 → 停止距离` 链已成立，当前缺综合 Play 证据与墙体碰撞边界验证；运行验收前不视为今日闸门完成。
 - 2026-08-27：综合 Play 验收由用户确认“没问题”。证据覆盖：玩家在 5 单位激活范围外时 SlimeBlock 保持 Dormant/Idle 且不行动；进入范围后只切换一次 Chase 并沿直线追踪；进入 1.2 单位停止距离后保持 Chase 但停止并播放 Idle；玩家重新拉开后无需再次激活即可继续追踪；墙位于中间时敌人被实体碰撞阻挡、不会穿墙也不会绕路；Console 无阻断性红色错误。今日唯一目标“正式 SlimeBlock Prefab + Animator/运行时玩家引用 + Dormant→Chase 激活 + 直线追踪 + 停止距离 + 碰撞边界”正式完成。六方向动画同步、Attack、Dead、接触伤害与四方向 A* 均未实现且不在今日继续推进。
+
+## 17. 2026-08-28 SlimeBlock Health/Dead 教学进度
+
+- 今日目标为让敌人复用现有 `IDamageable/Health`，随后完成攻击距离、攻击冷却、玩家受伤与 `Dormant/Chase/Attack/Dead` 四状态闭环；B/C 不看视频，依据现有代码实现。
+- A 块已把现有 `Health` 挂到正式 `Assets/Prefabs/Enemies/SlimeBlock.prefab` 根对象，配置为 50 点最大生命、0 秒受击无敌。设为 0 是为了不阻挡同一轮霰弹枪的多颗弹丸；Unity 编译无错误或警告。
+- `EnemyController` 已用私有 `enemyHealth` 在 `Awake()` 获取同对象 `Health`；`EnemyState` 已加入 `Dead`，私有 `Die()` 通过统一 `ChangeState(Dead)` 进入死亡状态；`OnEnable/OnDisable` 已成对订阅与退订 `enemyHealth.Died`。
+- 用户完成 Play 最小死亡测试并反馈“没问题”：50 点生命的 SlimeBlock 被两发 25 点手枪伤害击杀，`Dead` 状态日志只出现一次，后续射击不重复发布死亡，死亡后不再移动，Console 无红色错误。当前死亡停止主要来自 `Dead` 空分支不再发出移动命令，尚需在进入 `Dead` 时主动清零刚体速度并统一设置 Idle，之后再进入 `Attack`。
+- `EnemyState.Dead` 的物理分支已补齐确定性停止：每个物理帧将 Rigidbody2D 速度归零，并统一设置 `isMoving=false`、`isIdle=true`；Unity 编译无错误或警告。A 块“复用现有 `IDamageable/Health`、单次 `Died`、Enemy Dead 与死亡停止行动”完成，下一准确起点为 B 块建立 `Attack` 状态和攻击配置数据，尚未实现玩家受伤或攻击冷却。
+- B 块攻击骨架已建立：`EnemyState` 顺序为 `Dormant/Chase/Attack/Dead`；序列化配置为攻击距离 1.2、攻击冷却 1 秒、攻击伤害 10，并有完全私有的运行时冷却计时器。`Update()` 仅在计时器大于零时用 `Time.deltaTime` 递减。
+- `Chase` 已将旧停止距离判断替换为攻击距离判断：进入 1.2 单位时先停止刚体、切为 Idle，再通过 `ChangeState(Attack)` 进入攻击状态。用户完成 Play 单向转换测试并反馈完成，证据覆盖 `Dormant → Chase → Attack` 依次发生、Attack 只记录一次且保持停止；Unity Console 无错误或警告。当前尚无 `Attack` 分支，因此玩家离开后不会恢复 Chase；下一准确起点只实现 `Attack → Chase` 距离退出。
+- `Attack` 物理分支已补齐：玩家离开 1.2 单位时通过 `ChangeState(Chase)` 恢复追踪，仍在范围内时持续将 Rigidbody2D 速度归零并保持 Idle。用户完成 Play 边界往返测试并反馈“没问题”，`Chase → Attack → Chase → Attack` 可重复发生、近距离停止、拉开后恢复且状态不锁死；Console 无错误或警告。case 的书写顺序不作为运行正确性的条件。当前尚未缓存玩家 `IDamageable`，也尚未实际扣血或重置攻击冷却。
+- 玩家 `IDamageable` 已由敌人在找到运行时玩家时缓存；`Attack` 范围内仅在冷却小于等于零时调用 `TakeDamage(10)`，随后把计时器重置为 1 秒，攻击判断位于距离范围分支内部，避免离开范围的同一帧补伤害。用户指出首次进入 Attack 会因计时器初始为零而立即扣血、缺少起手提示；已明确将“起手等待/攻击动画命中帧”留作后续手感优化，今天暂不实现，不阻塞原型闭环。当前等待玩家运行验证 Hurt、约 1 秒攻击节奏及离开范围停止伤害。
+- 玩家受伤与攻击冷却 Play 验收通过。用户反馈“没问题”，证据覆盖进入范围后玩家进入 Hurt、留在范围内约每 1 秒受到一次 10 点伤害而非逐帧扣血、离开 1.2 单位后停止伤害并恢复 Chase；Unity Console 无错误或警告。下一步只验证敌人持续攻击能否将玩家推进现有 `Dead` 链，暂未制作失败提示 UI。
+- 敌人持续攻击驱动玩家死亡的 Play 验收通过。用户确认玩家生命归零后 `Dead` 只出现一次，死亡后不能移动或开火，继续留在攻击范围也不会再次进入 Hurt 或重复发布 Dead；用户还提前确认按住 R 可以成功重载当前场景。Unity Console 无错误或警告。B 块“攻击距离、攻击冷却、玩家受伤、Enemy Dead、死亡后停止行动”已具备代码与运行证据；C 块剩余主要工作为失败提示 UI 与四状态/玩家无敌/死亡/重开的综合回归。当前场景和现有 Prefab/脚本中未检索到 Canvas、TMP 或失败提示结构。
+- C 块已在 `SampleScene` 建立场景级 `GameOverUICanvas`，Canvas 保持激活、Screen Space Overlay、Sorting Order 100；其子 `Panel` 默认不激活，包含 TMP 失败文字。已创建并挂载 `GameOverUI`，序列化引用正确指向隐藏 Panel。
+- `GameOverUI` 会仅在 `playerHealth` 为空时按 Player Tag 重试查找运行时生成的玩家，找到后缓存根对象 `Health` 并停止重复查找。用户完成 Play 查找测试并反馈“没问题”：找到日志只出现一次、Panel 仍隐藏、Console 无红色错误。当前尚未订阅 `Health.Died` 或显示失败提示。
+- `GameOverUI` 已在成功缓存玩家 Health 的同一查找块中单次订阅 `Died`，私有显示方法负责激活 Panel，`OnDisable()` 成对退订；已避免把 `+=` 放在每帧执行的普通 Update 路径中造成重复订阅。用户完成失败流程 Play 验收并反馈“没问题”：初始 Panel 隐藏、玩家死亡时立即显示、Dead 后不能移动或开火、按 R 重载后 Panel 重新隐藏且新玩家恢复，Unity Console 无错误或警告。下一步补测 Dodge 免伤及受击后 0.5 秒无敌，再做四状态综合回归与清理。
+- Dodge 免伤 Play 回归通过。用户确认翻滚进入敌人攻击范围时，敌人的首次攻击尝试不会触发 Hurt；该次被拒绝的攻击仍消耗 1 秒敌人冷却，翻滚结束并留在范围后约 1 秒才正常进入 Hurt；Console 无红色错误。下一步使用 Play 模式临时缩短敌人攻击冷却，压力验证玩家受击后 0.5 秒无敌。
+- Codex 已完成玩家受击后无敌的运行时压力测试：仅在 Play 模式把 SlimeBlock 攻击冷却临时改为 0.1 秒并将敌人置于玩家 0.5 单位内，订阅玩家 `HealthChanged/Died` 记录时间。有效生命变化依次发生在 t=0.080、0.640、1.200、1.780、2.320、2.880、3.400、3.960、4.500、5.060 秒，相邻间隔约 0.54—0.58 秒，证明敌人虽每 0.1 秒尝试攻击，玩家 0.5 秒受击无敌会拒绝窗口内的攻击。生命归零时 `Died` 仅在 t=5.060 发布一次，继续等待后日志总数保持不变；退出 Play 后运行时改动未保存，脚本默认攻击冷却仍为 1 秒，Console 无错误或警告。
+- 2026-08-28 今日功能完成条件已有完整证据：正式 SlimeBlock 复用 `IDamageable/Health`；`Dormant → Chase ⇄ Attack` 与任意存活流程进入 `Dead` 均已分别运行验证；攻击距离 1.2、攻击冷却 1 秒、伤害 10 生效；敌人死亡停止行动且单次发布 Died；玩家 Hurt、Dodge 免伤、受击后 0.5 秒无敌、Dead、失败提示和 R 重开均通过。当前剩余仅为非阻断清理/手感项：未使用的旧 `stopDistance` 字段、查找玩家的临时日志，以及以后再做的攻击起手提示/动画命中帧。

@@ -6,6 +6,8 @@ enum EnemyState
 {
     Dormant,//休眠
     Chase,//追击
+    Attack,//攻击
+    Dead//死亡
 }
 public class EnemyController : MonoBehaviour
 {
@@ -23,16 +25,34 @@ public class EnemyController : MonoBehaviour
     private Animator enemyAnimator;
     //声明玩家的位置
     private Transform playerTransform;
+    //声明敌人的Health组件
+    private Health enemyHealth;
+    //声明敌人攻击距离
+    [SerializeField]
+    private float attackDistance = 1.2f;
+    //声明敌人攻击冷却时间
+    [SerializeField]
+    private float attackCooldown = 1f;
+    //声明敌人的攻击伤害
+    [SerializeField]
+    private int attackDamage = 10;
+    //声明敌人攻击计时器
+    private float attackCooldownTimer = 0f;
+    //声明玩家的IDamageable组件
+    private IDamageable playerDamageable;
     // Start is called before the first frame update
     //初始获取必要组件
     void Awake()
     {
+        //获取组件并初始化敌人动画与敌人速度
         enemyRigidbody = GetComponent<Rigidbody2D>();
         enemyAnimator = GetComponent<Animator>();
+        enemyHealth = GetComponent<Health>();
         enemyRigidbody.velocity = Vector2.zero;
         enemyAnimator.SetBool("isMoving", false);
         enemyAnimator.SetBool("isIdle", true); 
         enemyAnimator.SetBool("aimDown", true);
+
     }
     void Start()
     {
@@ -56,29 +76,37 @@ public class EnemyController : MonoBehaviour
                 ChangeState(EnemyState.Chase);
             }
            
-        } 
+        }
+        //处理计时器逻辑
+        if(attackCooldownTimer > 0f)
+        {
+            attackCooldownTimer -= Time.deltaTime;
+        }
     }
     void FixedUpdate()
     {
         //实现敌人有限状态机
         switch(currentState)
         {
+                //处理休眠状态
             case EnemyState.Dormant:
                 {
                     enemyAnimator.SetBool("isMoving", false);
                     enemyAnimator.SetBool("isIdle", true);
                 }
-                //处理休眠状态
+               
                 break;
+                //处理追击状态
             case EnemyState.Chase:
                 {
                     float distanceToPlayer = Vector2.Distance(transform.position, playerTransform.position);
                     
-                    if(distanceToPlayer <= stopDistance)
+                    if(distanceToPlayer <= attackDistance)
                     {
                         enemyRigidbody.velocity = Vector2.zero;
                         enemyAnimator.SetBool("isMoving", false);
                         enemyAnimator.SetBool("isIdle", true);
+                        ChangeState(EnemyState.Attack);
                     }
                     else
                     {
@@ -86,14 +114,50 @@ public class EnemyController : MonoBehaviour
                         enemyAnimator.SetBool("isMoving", true);
                         enemyAnimator.SetBool("isIdle", false);
                     }
-                    
-                    
-
                 }
-                //处理追击状态
+                
+                break;
+                //处理死亡状态
+            case EnemyState.Dead:
+                {
+                    enemyAnimator.SetBool("isMoving", false);
+                    enemyAnimator.SetBool("isIdle", true);
+                    enemyRigidbody.velocity = Vector2.zero;
+                }
+                break;
+            case EnemyState.Attack:
+                {
+                    //攻击逻辑可以在这里实现
+                    float distanceToPlayer = Vector2.Distance(transform.position, playerTransform.position);
+                    if(distanceToPlayer > attackDistance)
+                    {
+                        ChangeState(EnemyState.Chase);
+                    }
+                    else
+                    {
+                        enemyAnimator.SetBool("isMoving", false);
+                        enemyAnimator.SetBool("isIdle", true);
+                        enemyRigidbody.velocity = Vector2.zero;
+                         //处理攻击逻辑
+                        if(attackCooldownTimer <= 0f && playerDamageable != null)
+                        {
+                            playerDamageable.TakeDamage(attackDamage);
+                            attackCooldownTimer = attackCooldown;
+                        }
+                    }    
+                }
                 break;
         }
 
+    }
+    //事件的订阅与退订
+    void OnEnable()
+    {
+        enemyHealth.Died += Die;
+    }
+    void OnDisable()
+    {
+        enemyHealth.Died -= Die;
     }
     //声明方法寻找玩家的位置
     private void TryFindPlayer()
@@ -102,6 +166,7 @@ public class EnemyController : MonoBehaviour
         {
             Debug.Log("玩家已找到");
             playerTransform = playerTarget.transform;
+            playerDamageable = playerTarget.GetComponent<IDamageable>();
             return;
         }
         else
@@ -116,5 +181,10 @@ public class EnemyController : MonoBehaviour
     {
         currentState = newState;
         Debug.Log("敌人状态已改变为：" + newState);
+    }
+    //声明一个方法处理敌人的死亡逻辑
+    private void Die()
+    {
+        ChangeState(EnemyState.Dead);
     }
 }
