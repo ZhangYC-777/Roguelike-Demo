@@ -6,14 +6,48 @@ public class AStarPathfinding : MonoBehaviour
 {
     //声明网格的AStarGrid
     private AStarGrid grid;
+    //声明当前寻找到的路径
+    private List<PathNode> currentPath;
+    //声明测试的起点和终点
+    [SerializeField]
+    private Transform startTestTransform;
+    [SerializeField]
+    private Transform targetTestTransform;
     void Awake()
     {
          //获取网格的AStarGrid组件
         grid = GetComponent<AStarGrid>();
     }
+    void Start()
+    {
+        if(startTestTransform != null && targetTestTransform != null)
+        {
+            //调用寻路方法
+            FindPath(startTestTransform.position, targetTestTransform.position);
+        }
+    }
+    //绘制当前寻找到的路径
+    void OnDrawGizmos()
+    {
+        if(currentPath == null)
+        {
+            return;
+        }
+        else
+        {
+            //遍历当前寻找到的路径
+            foreach (PathNode pathNode in currentPath)
+            {
+                //绘制当前寻找到的路径
+                Gizmos.color = Color.yellow;
+                Gizmos.DrawCube(pathNode.worldPosition, Vector2.one *0.4f);
+            }
+        }
+    }
     //声明一个方法去寻路
     private void FindPath(Vector2 startPos, Vector2 targetPos)
     {
+        currentPath = null;
         //获取起点的网格节点
         PathNode startNode = grid.NodeFromWorldPoint(startPos);
         //获取终点的网格节点
@@ -41,6 +75,7 @@ public class AStarPathfinding : MonoBehaviour
             if(currentNode == targetNode)
             {
                 //暂时直接结束
+                currentPath = RetracePath(startNode, targetNode);
                 return;
             }
             //对当前节点的邻居进行过滤
@@ -108,5 +143,18 @@ public class AStarPathfinding : MonoBehaviour
         int dstX = Mathf.Abs(nodeA.gridX - nodeB.gridX);
         int dstY = Mathf.Abs(nodeA.gridY - nodeB.gridY);
         return dstX + dstY;
+    }
+    //声明一个方法获得路径
+    private List<PathNode> RetracePath(PathNode startNode, PathNode endNode)
+    {
+        List<PathNode> pathNodes = new List<PathNode>();
+        PathNode currentNode = endNode;
+        while (currentNode != startNode)
+        {
+            pathNodes.Add(currentNode);
+            currentNode = currentNode.parent;
+        }
+        pathNodes.Reverse();
+        return pathNodes;
     }
 }
