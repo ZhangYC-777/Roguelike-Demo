@@ -8,23 +8,10 @@ public class AStarPathfinding : MonoBehaviour
     private AStarGrid grid;
     //声明当前寻找到的路径
     private List<PathNode> currentPath;
-    //声明测试的起点和终点
-    [SerializeField]
-    private Transform startTestTransform;
-    [SerializeField]
-    private Transform targetTestTransform;
     void Awake()
     {
          //获取网格的AStarGrid组件
         grid = GetComponent<AStarGrid>();
-    }
-    void Start()
-    {
-        if(startTestTransform != null && targetTestTransform != null)
-        {
-            //调用寻路方法
-            FindPath(startTestTransform.position, targetTestTransform.position);
-        }
     }
     //绘制当前寻找到的路径
     void OnDrawGizmos()
@@ -45,9 +32,10 @@ public class AStarPathfinding : MonoBehaviour
         }
     }
     //声明一个方法去寻路
-    private void FindPath(Vector2 startPos, Vector2 targetPos)
+    public bool TryFindPath(Vector2 startPos, Vector2 targetPos, out List<PathNode> path)
     {
         currentPath = null;
+        path = null;
         //获取起点的网格节点
         PathNode startNode = grid.NodeFromWorldPoint(startPos);
         //获取终点的网格节点
@@ -76,7 +64,8 @@ public class AStarPathfinding : MonoBehaviour
             {
                 //暂时直接结束
                 currentPath = RetracePath(startNode, targetNode);
-                return;
+                path = currentPath;
+                return true;
             }
             //对当前节点的邻居进行过滤
             foreach (PathNode neighbour in grid.GetNeighbours(currentNode))
@@ -108,6 +97,7 @@ public class AStarPathfinding : MonoBehaviour
                 }
             }
         }
+        return false;
     }
     //声明一个方法去选择节点
     private PathNode GetLowestCostNode(List<PathNode> pathNodes)

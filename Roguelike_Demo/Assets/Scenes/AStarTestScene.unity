@@ -241,6 +241,7 @@ GameObject:
   - component: {fileID: 616964881}
   - component: {fileID: 616964882}
   - component: {fileID: 616964883}
+  - component: {fileID: 616964884}
   m_Layer: 0
   m_Name: AStarGrid
   m_TagString: Untagged
@@ -294,8 +295,20 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 54d57f08a17dbbf42b374e5497b5c2fe, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+--- !u!114 &616964884
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 616964880}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: c7656b322e886ce48a028f974b9a9e75, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
   startTestTransform: {fileID: 1212793221}
-  targetTestTransform: {fileID: 183170178}
+  targetTestTransform: {fileID: 1212793221}
 --- !u!1 &636461372
 GameObject:
   m_ObjectHideFlags: 0

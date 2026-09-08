@@ -19,12 +19,6 @@ public class AStarGrid : MonoBehaviour
     //声明需要要过滤的图层
     [SerializeField]
     private LayerMask obstacleLayer ;
-    //声明起点的Transform
-    [SerializeField]
-    private Transform startTransform;
-    //声明终点的Transform
-    [SerializeField]
-    private Transform targetTransform;
 
     //计算节点数量
     void Awake()
@@ -44,10 +38,6 @@ public class AStarGrid : MonoBehaviour
         }
         else
         {
-            //获取起始位置的网格坐标
-            PathNode startNode = NodeFromWorldPoint(startTransform.position);
-            //获取目标位置的网格坐标
-            PathNode targetNode = NodeFromWorldPoint(targetTransform.position);
             for (int x = 0; x < gridSizeX; x++)
             {
                 for (int y = 0; y < gridSizeY; y++)
@@ -56,16 +46,6 @@ public class AStarGrid : MonoBehaviour
                     Gizmos.color = (grid[x, y].Walkable) ? Color.white : Color.red;
                     //绘制网格节点
                     Gizmos.DrawWireCube(grid[x, y].worldPosition,Vector2.one * (cellSize - 0.1f));
-                    if (grid[x, y] == startNode)
-                    {
-                        Gizmos.color = Color.green;
-                        Gizmos.DrawWireCube(grid[x, y].worldPosition, Vector2.one * (cellSize - 0.1f));
-                    }
-                    if (grid[x, y] == targetNode)
-                    {
-                        Gizmos.color = Color.blue;
-                        Gizmos.DrawWireCube(grid[x, y].worldPosition, Vector2.one * (cellSize - 0.1f));
-                    }
                 }
             }
         }
