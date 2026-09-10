@@ -21982,7 +21982,7 @@ GameObject:
   - component: {fileID: 8421550895982320718}
   - component: {fileID: 1358549679152410603}
   - component: {fileID: 4204475159709389609}
-  m_Layer: 0
+  m_Layer: 13
   m_Name: collision
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -40459,7 +40459,7 @@ CompositeCollider2D:
   m_UsedByEffector: 0
   m_UsedByComposite: 0
   m_Offset: {x: 0, y: 0}
-  m_GeometryType: 0
+  m_GeometryType: 1
   m_GenerationType: 0
   m_EdgeRadius: 0
   m_ColliderPaths:

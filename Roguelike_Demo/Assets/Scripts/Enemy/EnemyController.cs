@@ -40,6 +40,18 @@ public class EnemyController : MonoBehaviour
     private float attackCooldownTimer = 0f;
     //声明玩家的IDamageable组件
     private IDamageable playerDamageable;
+    //声明寻路组件
+    private AStarPathfinding pathFinding;
+    //声明获取到的路径列表
+    private List<PathNode> currentPath;
+    //声明当前路径的索引
+    private int currentPathIndex;
+    //声明重新计算路径的间隔
+    [SerializeField]
+    private float pathRecalculationInterval = 0.3f;
+    //声明重新计算路径的倒计时
+    private float pathRecalculationTimer = 0f;
+
     // Start is called before the first frame update
     //初始获取必要组件
     void Awake()
@@ -52,6 +64,8 @@ public class EnemyController : MonoBehaviour
         enemyAnimator.SetBool("isMoving", false);
         enemyAnimator.SetBool("isIdle", true); 
         enemyAnimator.SetBool("aimDown", true);
+        //获取寻路组件
+        pathFinding = FindObjectOfType<AStarPathfinding>();
 
     }
     void Start()
@@ -110,9 +124,8 @@ public class EnemyController : MonoBehaviour
                     }
                     else
                     {
-                        enemyRigidbody.MovePosition(Vector2.MoveTowards(enemyRigidbody.position, playerTransform.position, moveSpeed * Time.fixedDeltaTime));
-                        enemyAnimator.SetBool("isMoving", true);
-                        enemyAnimator.SetBool("isIdle", false);
+                        UpdatePathRecalculation();
+                        FollowPath();
                     }
                 }
                 
@@ -181,10 +194,80 @@ public class EnemyController : MonoBehaviour
     {
         currentState = newState;
         Debug.Log("敌人状态已改变为：" + newState);
+        //进入追击状态先进行一次寻路
+        if(newState == EnemyState.Chase)
+        {
+            RequestPath();
+            //将倒计时重置为重新计算路径的间隔
+            pathRecalculationTimer = pathRecalculationInterval;
+        }
+        else
+        {
+            ClearPath();
+        }
     }
     //声明一个方法处理敌人的死亡逻辑
     private void Die()
     {
         ChangeState(EnemyState.Dead);
+    }
+    //声明一个方法去请求路线
+    private void RequestPath()
+    {
+        if(playerTransform == null || pathFinding == null)
+        {
+            currentPath = null;
+            currentPathIndex = 0;
+            return;
+        }
+        else
+        {
+            currentPathIndex = 0;
+            pathFinding.TryFindPath(enemyRigidbody.position, playerTransform.position, out currentPath);
+        }
+    }
+    //声明一个方法让敌人跟随节点移动
+    private void FollowPath()
+    {
+        //判断无法移动的逻辑
+        if(currentPath == null || currentPath.Count == 0 || currentPathIndex >= currentPath.Count)
+        {
+            enemyRigidbody.velocity = Vector2.zero;
+            enemyAnimator.SetBool("isMoving", false);
+            enemyAnimator.SetBool("isIdle", true);
+            return;
+        }
+        else
+        {
+            //处理移动逻辑
+            enemyRigidbody.MovePosition(Vector2.MoveTowards(enemyRigidbody.position, currentPath[currentPathIndex].worldPosition, moveSpeed * Time.fixedDeltaTime));
+            enemyAnimator.SetBool("isMoving", true);
+            enemyAnimator.SetBool("isIdle", false);
+
+            float distanceToPathNode = Vector2.Distance(transform.position, currentPath[currentPathIndex].worldPosition);
+            if(distanceToPathNode < 0.05f)
+            {
+                currentPathIndex ++;
+            }
+
+        }
+    }
+    //声明一个函数去处理路径实时更新逻辑
+    private void UpdatePathRecalculation()
+    {
+        //计时器定时 间隔0.3秒寻路一次
+        pathRecalculationTimer -= Time.fixedDeltaTime;
+        if(pathRecalculationTimer <= 0)
+        {
+            RequestPath();
+            pathRecalculationTimer = pathRecalculationInterval;
+        }
+    }
+    //声明方法清理旧路径
+    private void ClearPath()
+    {
+        currentPath = null;
+        currentPathIndex = 0;
+        pathRecalculationTimer = 0f;
     }
 }
