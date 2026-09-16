@@ -3012,8 +3012,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   doors:
   - {fileID: 3743249412562358175}
-  enemyHealths:
-  - {fileID: 0}
+  enemyHealths: []
 --- !u!61 &417791821637456705
 BoxCollider2D:
   m_ObjectHideFlags: 0

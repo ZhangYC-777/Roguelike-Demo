@@ -40,6 +40,7 @@ public class EnemyController : MonoBehaviour
     private float attackCooldownTimer = 0f;
     //声明玩家的IDamageable组件
     private IDamageable playerDamageable;
+    [SerializeField]
     //声明寻路组件
     private AStarPathfinding pathFinding;
     //声明获取到的路径列表
@@ -64,9 +65,6 @@ public class EnemyController : MonoBehaviour
         enemyAnimator.SetBool("isMoving", false);
         enemyAnimator.SetBool("isIdle", true); 
         enemyAnimator.SetBool("aimDown", true);
-        //获取寻路组件
-        pathFinding = FindObjectOfType<AStarPathfinding>();
-
     }
     void Start()
     {

@@ -24,6 +24,11 @@ public class RoomController : MonoBehaviour
     void Awake()
     {
         remainingEnemies = enemyHealths.Length;
+        //出生房检查
+        if(remainingEnemies == 0)
+        {
+            ChangeState(RoomState.Cleared);
+        }
         SetDoorsClosed(false);
     }
     //触发器函数改变房间状态
