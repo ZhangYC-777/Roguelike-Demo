@@ -22,6 +22,7 @@ Codex 在本项目中必须以“教练/老师”身份工作：
 - 可以给出变量名、方法职责、伪代码、单行提示和局部修改方向；只有用户明确改变本规则时，才考虑提供较完整代码。
 - 遇到报错要先判断是语法、引用、Inspector、Prefab、运行时状态还是逻辑顺序问题，再给最小排查动作。
 - 检查 Unity 的 Animator、Prefab、Inspector、场景、Console、编译状态或运行时状态时，优先使用项目已配置的 Unity MCP 获取可核验证据；MCP 不可用、信息不足或必须由用户判断手感与视觉表现时，再安排用户手动检查。每次使用前先确认活动实例和编辑器就绪状态，不通过 MCP 未经委托修改脚本或项目资产。
+- Unity MCP 是本项目已经配置好的正式验收通道。若新会话中 Unity MCP 工具暂未显示或首次握手失败，应先检查 `mcpforunity://instances`、`mcpforunity://editor/state` 与本机 `127.0.0.1:8080/mcp` 连接并重试；连接恢复后使用 `refresh_unity`、`read_console` 及相应场景/运行工具完成验收，不能直接把普通界面观察当作 MCP 编译或运行证据。只有确认 MCP 当前确实不可恢复时，才明确降级为用户手动验证，并标注证据等级。
 - 同一个问题无明确方向持续 45—60 分钟时，停止硬耗，记录卡点并切换到求助/最小验证。
 - 不自动提交 Git；除非用户明确委托，只报告工作区状态和建议提交信息。
 - 不创建、更新或删除 Apple 提醒事项。学习计划以仓库文件为准。
@@ -375,3 +376,15 @@ A/B/C/D 和每个补充项都必须保留计划中的课程链接、章节、功
 - 2026-09-08：Unity MCP 自动接口综合测试通过。Play 模式首先以保存场景验证普通绕障路径，结果为 `success=true、path非null、Count=12`；同一点调用结果为 `success=true、path非null、Count=0`；随后仅在运行时把四堵 TestWall 移到目标的上下左右、同步物理并反射重建网格，封闭目标结果为 `success=false、path=null`。退出 Play 后四堵墙恢复到磁盘保存位置，Console 0 错误、0 警告。正式接口的三态返回契约已通过。当前剩余接口边界清理：`AStarGrid` 的 Gizmo 仍直接保存并读取测试起终点 Transform，正式网格组件尚未完全摆脱测试场景引用；下一步只把起终点测试高亮职责迁移到 Tester 或做等价解耦，不接敌人。
 - 2026-09-08：测试发起职责已完成拆分并通过运行验证。新增 `AStarPathfindingTester`，由它保存测试起终点、获取同对象 `AStarPathfinding`、调用 `TryFindPath` 并根据 bool 与输出路径区分无路、同格和普通路径；局部 `pathFound/path` 已放在有效引用判断的同一作用域内。`AStarPathfinding` 已删除测试 Transform 与自启动 `Start()`，只保留网格引用、正式接口、搜索实现和调试路径 Gizmo。磁盘场景确认 Tester 已挂到 `AStarTestScene` 并绑定两个 Transform；用户 Play 确认黄色路径与正常路径日志均无问题。正式接口解耦与普通成功分支通过，下一步只验证同格成功分支。
 - 2026-09-08：本日“A* 正式接口”目标完成。`AStarGrid` 已删除测试起终点 Transform 及绿/蓝高亮，只保留正式网格职责和白/红网格 Gizmo；删除的是调试显示，不影响节点数据或搜索。Unity MCP 再次编译与 Play 回归：正常竖墙绕障仍返回 `true`、路径非 null、Count=12；运行时四墙封闭目标仍返回 `false`、路径 null；退出 Play 后墙位恢复，Console 0 错误、0 警告。结合此前同格 `true/non-null/Count=0` 证据，三态接口、外部测试调用和测试依赖解耦均已通过。今日不接 `EnemyController`、不做逐点移动或 0.3 秒重算；下一开发目标才是敌人 Chase 消费正式路径。
+
+## 20. 2026-09-17 C1 胜负闭环教学进度
+
+- B2 三房引用隔离此前已完成，C1 当前从中央游戏状态开始推进。`RoomController` 新增公开无参数事件 `RoomCleared`，只在真正进入 `Cleared`、开门之后发布；相同状态提前返回继续阻止重复发布。
+- 用户创建 `GameFlowController`，定义 `Playing/Won/Lost`，以统一 `ChangeState` 去重并切换状态；通过 `OnEnable/OnDisable` 成对订阅和退订最终房间事件，并为未绑定引用保留空值保护。
+- `SampleScene` 已保存根对象 `GameFlowController`，其 `finalRoom` 明确引用 `BattleRoom_B` 的 `RoomController`，不是出生房或 A 房。Unity MCP 脚本刷新与编译为 0 个 C# Error。
+- 本轮 Unity MCP Play Mode 不落盘测试通过：B 房进入 Combat 时为 `remaining=2/game=Playing`；第一名敌人死亡后仍为 `Combat/1/Playing`；第二名死亡后变为 `Cleared/0/Won`；重复死亡后仍保持 `Cleared/0/Won`。退出 Play 后测试状态已恢复。
+- 当前 C1 只完成 `Playing → Won` 状态链；玩家死亡到 `Lost`、胜负 UI、终局停止战斗，以及 Won/Lost 统一按 R 重开仍未完成。既有 `TheGeneral` 的 `AnyState -> IdleLeft` 无条件过渡错误仍单独保留，不影响本小模块验收，也不能把当前工程描述为全局 0 Error。
+- 下一准确教学起点：让中央控制器安全找到运行时生成玩家的 `Health`，订阅 `Died` 并进入 `Lost`；不要重复保留 `GameOverUI` 和中央控制器两套互相竞争的失败流程，UI 与 R 重开在死亡状态链通过后统一收口。
+- 用户随后要求只看数据流自行实现，并完成运行时玩家死亡链：`Update` 只在 `playerHealth` 为空时重试查找带 `Player` Tag 的运行时对象，找到后缓存其 `Health` 并订阅 `Died`；`OnDisable` 对玩家和最终房间事件分别做空值保护与退订；死亡处理通过统一入口进入 `Lost`。
+- Unity MCP Play Mode 验证：中央控制器缓存的 `Health` 与运行时玩家组件一致，玩家 `Died` 当前有3个订阅者（玩家Dead、失败UI、全局Lost三个独立职责）；初始为`hp=100/game=Playing`，致死后为`hp=0/game=Lost`，重复伤害后仍保持`0/Lost`。本轮Console 0 Error、0 Warning，退出Play后测试改动已恢复。
+- C1当前已具备`Playing → Won`与`Playing → Lost`两条中央状态链。下一准确起点改为统一终局UI：让全局状态负责Won/Lost显示，收回`GameOverUI`自行寻找玩家并订阅死亡的旧入口；之后再完成终局停止战斗以及Won/Lost统一按R重开。

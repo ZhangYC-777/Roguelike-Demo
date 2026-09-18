@@ -1,6 +1,7 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using System;
 //定义一个房间状态机
 public enum RoomState
 {
@@ -20,6 +21,8 @@ public class RoomController : MonoBehaviour
     private Health[] enemyHealths;
     //声明敌人的剩余数量
     private int remainingEnemies;
+    //声明房间清空的事件
+    public event Action RoomCleared;
     //初始化敌人的数量
     void Awake()
     {
@@ -60,6 +63,7 @@ public class RoomController : MonoBehaviour
             if(currentState == RoomState.Cleared)
             {
                 SetDoorsClosed(false);
+                RoomCleared?.Invoke();
             }
             Debug.Log("状态改变为： " + newState);
         }
